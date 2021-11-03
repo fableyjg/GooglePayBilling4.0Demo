@@ -1,0 +1,67 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 31
+    buildToolsVersion "30.0.3"
+
+    defaultConfig {
+        applicationId "com.hg.idlefarm"
+        minSdkVersion 26
+        targetSdkVersion 31
+        versionCode 2
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            debuggable true //true 输出日志
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    signingConfigs{
+//        debug {
+//            kayAlias 'idlefarm'
+//            keyPassword 'idlefarm200622'
+//            storeFile file('D:/work/sign/IdleFarm/hw_idlefarm.jks')
+//            storePassword 'idlefarm200622'
+//        }
+//        release {
+//            storeFile file(keystoreProperties['D:/work/sign/IdleFarm/hw_idlefarm.jks'])
+//            storePassword keystoreProperties['idlefarm200622']
+//            keyAlias keystoreProperties['idlefarm']
+//            keyPassword keystoreProperties['idlefarm200622']
+//        }
+
+        debug {
+            storeFile file(RELEASE_STORE_FILE_APOLLO)
+            storePassword RELEASE_STORE_PASSWORD
+            keyAlias RELEASE_KEY_ALIAS
+            keyPassword RELEASE_KEY_PASSWORD
+        }
+
+        release {
+            storeFile file(RELEASE_STORE_FILE_APOLLO)
+            storePassword RELEASE_STORE_PASSWORD
+            keyAlias RELEASE_KEY_ALIAS
+            keyPassword RELEASE_KEY_PASSWORD
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation 'androidx.appcompat:appcompat:1.3.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+
+    implementation "com.android.billingclient:billing:4.0.0"
+
+}
