@@ -64,4 +64,6 @@ dependencies {
 
     implementation "com.android.billingclient:billing:4.0.0"
 
+    //测试追踪referrer
+    implementation 'com.android.installreferrer:installreferrer:2.2'
 }

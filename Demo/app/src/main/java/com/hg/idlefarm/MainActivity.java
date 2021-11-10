@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
 
@@ -22,6 +23,9 @@ import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
 import com.android.billingclient.api.SkuDetailsResponseListener;
+import com.android.installreferrer.api.InstallReferrerClient;
+import com.android.installreferrer.api.InstallReferrerStateListener;
+import com.android.installreferrer.api.ReferrerDetails;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        installReferrer();
         Log.i(TAG, "onCreate: before init");
         initPurchase();
         findViewById(R.id.btn_init).setOnClickListener(new View.OnClickListener() {
@@ -62,6 +67,53 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+
+    InstallReferrerClient referrerClient;
+    private void installReferrer(){
+        referrerClient = InstallReferrerClient.newBuilder(this).build();
+        referrerClient.startConnection(new InstallReferrerStateListener() {
+            @Override
+            public void onInstallReferrerSetupFinished(int responseCode) {
+                switch (responseCode) {
+                    case InstallReferrerClient.InstallReferrerResponse.OK:
+                        // Connection established.
+                        Log.i(TAG, "onInstallReferrerSetupFinished: ok");
+                        getInstallReferrer();
+                        break;
+                    case InstallReferrerClient.InstallReferrerResponse.FEATURE_NOT_SUPPORTED:
+                        // API not available on the current Play Store app.
+                        break;
+                    case InstallReferrerClient.InstallReferrerResponse.SERVICE_UNAVAILABLE:
+                        // Connection couldn't be established.
+                        break;
+                }
+            }
+
+            @Override
+            public void onInstallReferrerServiceDisconnected() {
+                // Try to restart the connection on the next request to
+                // Google Play by calling the startConnection() method.
+            }
+        });
+    }
+
+    private void getInstallReferrer(){
+        ReferrerDetails response = null;
+        try {
+            response = referrerClient.getInstallReferrer();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        String referrerUrl = response.getInstallReferrer();
+        long referrerClickTime = response.getReferrerClickTimestampSeconds();
+        long appInstallTime = response.getInstallBeginTimestampSeconds();
+        boolean instantExperienceLaunched = response.getGooglePlayInstantParam();
+
+        Log.i(TAG, "getInstallReferrer: referrerUrl：" + referrerUrl + " referrerClickTime: " +referrerClickTime + " appInstallTime: "+appInstallTime+ " instantExperienceLaunched:"+ instantExperienceLaunched);
+    }
+
+
+
     /*
     从2021年11月1日起，现有应用所有新版本都必须使用结算库版本3或更高版本
     订阅流程
@@ -77,7 +129,8 @@ public class MainActivity extends AppCompatActivity {
     处于宽限期：用户遇到付款出问题，但仍可享用订阅内容，Google会重新尝试扣款
     暂时保留：用户遇到付款问题，不再享受订阅内容；Google会重新尝试扣款
     已暂停：用户暂停了订阅，在恢复之前不能享受订阅内容
-    已到期：用户已取消且不能再享受订阅内容。用户在订阅到期时会被视为流失。
+    已到期：用户已取消且不能再享受订阅内容。用户在订阅到期时会被
+    视为流失。
      */
 
     // step1:初始化BillingClient
@@ -156,6 +209,7 @@ public class MainActivity extends AppCompatActivity {
 
     //查询信息时，存储所有商品信息
     List<SkuDetails> mSkuDetails;
+
     //ProductId 商品ID，
     String productId = "";
 
@@ -327,7 +381,7 @@ public class MainActivity extends AppCompatActivity {
     //处理一次性商品
     void handlePurchase(Purchase purchase){
 
-        Log.i(TAG, "handlePurchase: " + purchase.getSkus());
+        Log.i(TAG, "handlePurchase: " + purchase.getSkus() + " id:" + purchase.getOrderId() + " token:" + purchase.getPurchaseToken());
         ConsumeParams consumeParams =
                 ConsumeParams.newBuilder()
                         .setPurchaseToken(purchase.getPurchaseToken())
